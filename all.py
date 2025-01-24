@@ -32,7 +32,7 @@ def distance():
 def ultra_to_tank():
     measured_distance = distance()    
     if measured_distance > 50:
-        TOKEN= "77094057858:AAGU0CMWAcTnuMBJoUmBlg8HxUc8c1Mx3jw"
+        TOKEN= "7094057858:AAGU0CMWAcTnuMBJoUmBlg8HxUc8c1Mx3jw"
         chat_id="-1002405515611"
         message = "refill the tank"
         url =f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={message}"
