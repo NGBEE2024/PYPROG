@@ -17,8 +17,8 @@ while (True):
 
     if GPIO.input(4): #if read a high at GPIO 4, moisture present
         print('detected HIGH i.e. moisture')
-        PWM.start(13) #13% duty cycle
-        print('duty cycle:', 13) #9 o'clock position
+        PWM.start(8) #13% duty cycle
+        print('duty cycle:', 8) #9 o'clock position
         sleep(sdelay) #allow time for movement
         PWM.start(3) #3% duty cycle
         sleep(sdelay)
