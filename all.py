@@ -36,7 +36,7 @@ def ultra_to_tank():
         chat_id="-1002405515611"
         message = "refill the tank"
         url =f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={message}"
-        
+        requests.get(url).json()
 
     print("Measured distance = {0:0.1f} cm".format(distance()))
     time.sleep(1)
