@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Pi Camera Control</title>
+</head>
+<body>
+    <h1>Pi Camera Control</h1>
+    <img src="{{ url_for('video_feed') }}" width="640">
+    <br><br>
+    <button onclick="window.location.href='/screenshot'">Take Screenshot</button>
+    <button onclick="window.location.href='/video'">Start/Stop Video</button>
+</body>
+</html>
