@@ -74,7 +74,7 @@ def fetch_thingspeak_data():
 
 @app.route('/')
 def index():
-    return render_template('index.html', days_since_refill=get_days_since_refill())
+    return render_template('ul.html', days_since_refill=get_days_since_refill())
 
 @app.route('/update')
 def update():

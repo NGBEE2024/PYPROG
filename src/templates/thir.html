@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Control Panel</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        button { padding: 10px 20px; margin: 10px; font-size: 16px; cursor: pointer; }
+        input { padding: 5px; font-size: 14px; margin: 5px; }
+    </style>
+    <script>
+        function toggleFeature(url) {
+            fetch(url, { method: 'POST' }).then(() => location.reload());
+        }
+
+        function setThresholds() {
+            let formData = new FormData(document.getElementById('thresholdForm'));
+            fetch('/set_thresholds', { method: 'POST', body: formData }).then(() => location.reload());
+        }
+    </script>
+</head>
+<body>
+    <h1>Sensor Control Panel</h1>
+
+    <button onclick="toggleFeature('/toggle_temp_humi')">
+        Toggle Temperature & Humidity (Currently: {{ 'ON' if temp_humi else 'OFF' }})
+    </button>
+
+    <button onclick="toggleFeature('/toggle_ldr')">
+        Toggle LDR Monitoring (Currently: {{ 'ON' if ldr else 'OFF' }})
+    </button>
+
+    <h2>Set Thresholds</h2>
+    <form id="thresholdForm" onsubmit="event.preventDefault(); setThresholds();">
+        <label>Min Temperature:</label>
+        <input type="number" name="temp_min" value="{{ temp_min }}" required>
+        <label>Max Temperature:</label>
+        <input type="number" name="temp_max" value="{{ temp_max }}" required>
+        <label>Max Humidity:</label>
+        <input type="number" name="humidity_max" value="{{ humidity_max }}" required>
+        <button type="submit">Set</button>
+    </form>
+</body>
+</html>
