@@ -13,8 +13,7 @@
                     document.getElementById('last_refill_time').innerText = data.last_refill_timestamp;
 
                     // Refresh ThingSpeak graph
-                    document.getElementById('thingspeakGraph').src = 
-                        "https://thingspeak.com/channels/2746200/charts/3?results=5&dynamic=true&timestamp=" + new Date().getTime();
+                    
                 })
                 .catch(error => console.error('Error fetching data:', error));
         }
