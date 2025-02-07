@@ -30,7 +30,7 @@ def distance():
         StopTime = time.time()
     return (StopTime - StartTime) * 34300 / 2
 
-def get_last_refill_timestamp():
+def get_last_refill_datetime():
     url = f"https://api.thingspeak.com/channels/{THING_SPEAK_CHANNEL_ID}/feeds.json?results=10&api_key=IJ7JE71BJ5DVEMG7"
     response = requests.get(url)
     
@@ -38,46 +38,32 @@ def get_last_refill_timestamp():
         records = json.loads(response.text)["feeds"]
         last_seen_1 = None
         for record in reversed(records):  # Loop from latest to oldest
-            if record.get("field3") == "1":
-                last_seen_1 = record["created_at"]  # Store full timestamp
-            elif record.get("field3") == "0" and last_seen_1:
-                return last_seen_1  # Return the last 0 after last 1
+            if record["field3"] == "1":
+                last_seen_1 = record["created_at"]  # Store last 1 timestamp
+            elif record["field3"] == "0" and last_seen_1:
+                # Convert to DD/MM/YYYY HH:MM format
+                return datetime.strptime(last_seen_1, "%Y-%m-%dT%H:%M:%SZ").strftime("%d/%m/%Y %H:%M")
     
     return "Unknown"
 
 def get_days_since_refill():
-    last_refill = get_last_refill_timestamp()
+    last_refill = get_last_refill_datetime()
     if last_refill == "Unknown":
         return "Unknown"
-    
-    try:
-        last_refill_date = datetime.strptime(last_refill, "%Y-%m-%dT%H:%M:%SZ").date()
-        return (datetime.now().date() - last_refill_date).days
-    except ValueError:
-        return "Unknown"
+    return (datetime.now().date() - datetime.strptime(last_refill, "%d/%m/%Y %H:%M").date()).days
 
 def upload_to_thingspeak(value):
-    url = f"https://api.thingspeak.com/update?api_key=ATNCBN0ZUFSYGREX&field3={value}"  # Write to field3
+    url = f"https://api.thingspeak.com/update?api_key=ATNCBN0ZUFSYGREX&field3={value}" # Write to field3
     requests.get(url)
 
 def check_and_notify():
     level = distance()
     if level > 50:
         upload_to_thingspeak(1)
-        last_refill_date = get_last_refill_timestamp()
-        
-        if last_refill_date != "Unknown":
-            try:
-                last_refill_date_only = datetime.strptime(last_refill_date, "%Y-%m-%dT%H:%M:%SZ").date()
-                today_date = datetime.now().date()
-
-                if last_refill_date_only != today_date:
-                    requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage?chat_id={CHAT_ID}&text=Refill the tank")
-            except ValueError:
-                pass
+        if get_last_refill_datetime() != datetime.now().strftime("%d/%m/%Y %H:%M"):
+            requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage?chat_id={CHAT_ID}&text=Refill the tank")
     else:
         upload_to_thingspeak(0)
-    
     return level
 
 def fetch_thingspeak_data():
@@ -89,16 +75,14 @@ def fetch_thingspeak_data():
 
 @app.route('/')
 def index():
-    return render_template('ul.html', 
-                           days_since_refill=get_days_since_refill(), 
-                           last_refill_timestamp=get_last_refill_timestamp())
+    return render_template('ul.html', days_since_refill=get_days_since_refill(), last_refill=get_last_refill_datetime())
 
 @app.route('/update')
 def update():
     return jsonify({
         "days_since_refill": get_days_since_refill(),
         "tank_level": check_and_notify(),
-        "last_refill_timestamp": get_last_refill_timestamp(),  # Get date and time
+        "last_refill_datetime": get_last_refill_datetime(),  # Get last refill date & time
         "history": fetch_thingspeak_data()
     })
 
