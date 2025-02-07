@@ -5,30 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Water Tank Monitor</title>
     <script>
-        let lastDaysRefill = null;
-        let lastRefillDate = null;
-
         function updateData() {
             fetch('/update')
                 .then(response => response.json())
                 .then(data => {
-                    // Check for changes before updating the page
-                    if (lastDaysRefill !== data.days_since_refill) {
-                        document.getElementById('days').innerText = data.days_since_refill;
-                        lastDaysRefill = data.days_since_refill;
-                    }
+                    // Update the page with new data
+                    document.getElementById('days').innerText = data.days_since_refill;
+                    document.getElementById('time').innerText = data.current_time;
 
-                    if (lastRefillDate !== data.last_refill_date) {
-                        document.getElementById('time').innerText = data.current_time;
-                        lastRefillDate = data.last_refill_date;
-                    }
-
-                    // Refresh ThingSpeak graph if changes detected
+                    // Force refresh ThingSpeak graph by appending a timestamp to the URL
                     document.getElementById('thingspeakGraph').src = 
-                        "https://thingspeak.com/channels/2746200/charts/3?results=5&dynamic=true&" + new Date().getTime();
-                });
+                        "https://thingspeak.com/channels/2746200/charts/3?results=5&dynamic=true&timestamp=" + new Date().getTime();
+                })
+                .catch(error => console.error('Error fetching data:', error));
         }
 
+        // Run update immediately on page load
+        window.onload = updateData;
+
+        // Update data every 5 seconds
         setInterval(updateData, 5000);
     </script>
 </head>
