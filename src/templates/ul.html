@@ -5,14 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Water Tank Monitor</title>
     <script>
+        let lastDaysRefill = null;
+        let lastRefillDate = null;
+
         function updateData() {
             fetch('/update')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('days').innerText = data.days_since_refill;
-                    document.getElementById('time').innerText = data.current_time;
+                    // Check for changes before updating the page
+                    if (lastDaysRefill !== data.days_since_refill) {
+                        document.getElementById('days').innerText = data.days_since_refill;
+                        lastDaysRefill = data.days_since_refill;
+                    }
+
+                    if (lastRefillDate !== data.last_refill_date) {
+                        document.getElementById('time').innerText = data.current_time;
+                        lastRefillDate = data.last_refill_date;
+                    }
+
+                    // Refresh ThingSpeak graph if changes detected
+                    document.getElementById('thingspeakGraph').src = 
+                        "https://thingspeak.com/channels/2746200/charts/3?results=5&dynamic=true&" + new Date().getTime();
                 });
         }
+
         setInterval(updateData, 5000);
     </script>
 </head>

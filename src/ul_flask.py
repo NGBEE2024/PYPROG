@@ -59,10 +59,12 @@ def check_and_notify():
     level = distance()
     if level > 50:
         upload_to_thingspeak(1)
+        print(f"upload 1 to ts")
         if get_last_refill_date() != datetime.now().date().strftime("%Y-%m-%d"):
             requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage?chat_id={CHAT_ID}&text=Refill the tank")
     else:
         upload_to_thingspeak(0)
+        print(f"upload 0 to ts")
     return level
 
 def fetch_thingspeak_data():
