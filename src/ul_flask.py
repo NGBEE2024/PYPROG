@@ -30,7 +30,7 @@ def distance():
         StopTime = time.time()
     return (StopTime - StartTime) * 34300 / 2
 
-def get_last_refill_date():
+def get_last_refill_timestamp():
     url = f"https://api.thingspeak.com/channels/{THING_SPEAK_CHANNEL_ID}/feeds.json?results=10&api_key=IJ7JE71BJ5DVEMG7"
     response = requests.get(url)
     
@@ -39,14 +39,15 @@ def get_last_refill_date():
         last_seen_1 = None
         for record in reversed(records):  # Loop from latest to oldest
             if record["field3"] == "1":
-                last_seen_1 = record["created_at"].split("T")[0]  # Store last 1 timestamp
+                last_seen_1 = record["created_at"]  # Store full timestamp
             elif record["field3"] == "0" and last_seen_1:
-                return record["created_at"].split("T")[0]  # Return the last 0 after last 1
+                return last_seen_1  # Return the last 0 after last 1
     
     return "Unknown"
 
+
 def get_days_since_refill():
-    last_refill = get_last_refill_date()
+    last_refill = get_last_refill_timestamp()
     if last_refill == "Unknown":
         return "Unknown"
     return (datetime.now().date() - datetime.strptime(last_refill, "%Y-%m-%d").date()).days
@@ -59,7 +60,7 @@ def check_and_notify():
     level = distance()
     if level > 50:
         upload_to_thingspeak(1)
-        if get_last_refill_date() != datetime.now().date().strftime("%Y-%m-%d"):
+        if get_last_refill_timestamp() != datetime.now().date().strftime("%Y-%m-%d"):
             requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage?chat_id={CHAT_ID}&text=Refill the tank")
     else:
         upload_to_thingspeak(0)
@@ -74,16 +75,15 @@ def fetch_thingspeak_data():
 
 @app.route('/')
 def index():
-    return render_template('ul.html', days_since_refill=get_days_since_refill())
+    return render_template('ul.html', 
+                           days_since_refill=get_days_since_refill(), 
+                           last_refill_timestamp=get_last_refill_timestamp())
 
 @app.route('/update')
 def update():
     return jsonify({
         "days_since_refill": get_days_since_refill(),
         "tank_level": check_and_notify(),
-        "last_refill_date": get_last_refill_date(),  # Get from ThingSpeak
+        "last_refill_timestamp": get_last_refill_timestamp(),  # Get date and time
         "history": fetch_thingspeak_data()
     })
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
