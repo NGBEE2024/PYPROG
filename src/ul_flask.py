@@ -38,9 +38,9 @@ def get_last_refill_timestamp():
         records = json.loads(response.text)["feeds"]
         last_seen_1 = None
         for record in reversed(records):  # Loop from latest to oldest
-            if record["field3"] == "1":
+            if record.get("field3") == "1":
                 last_seen_1 = record["created_at"]  # Store full timestamp
-            elif record["field3"] == "0" and last_seen_1:
+            elif record.get("field3") == "0" and last_seen_1:
                 return last_seen_1  # Return the last 0 after last 1
     
     return "Unknown"
@@ -51,30 +51,33 @@ def get_days_since_refill():
         return "Unknown"
     
     try:
-        last_date = datetime.strptime(last_refill[:10], "%Y-%m-%d").date()  # Extract date only
-        return (datetime.now().date() - last_date).days
+        last_refill_date = datetime.strptime(last_refill, "%Y-%m-%dT%H:%M:%SZ").date()
+        return (datetime.now().date() - last_refill_date).days
     except ValueError:
-        return "Error parsing date"
+        return "Unknown"
 
 def upload_to_thingspeak(value):
-    url = f"https://api.thingspeak.com/update?api_key=ATNCBN0ZUFSYGREX&field3={value}" # Write to field3
+    url = f"https://api.thingspeak.com/update?api_key=ATNCBN0ZUFSYGREX&field3={value}"  # Write to field3
     requests.get(url)
 
 def check_and_notify():
     level = distance()
     if level > 50:
         upload_to_thingspeak(1)
+        last_refill_date = get_last_refill_timestamp()
         
-        # Convert last refill timestamp to date
-        last_refill = get_last_refill_timestamp()
-        if last_refill != "Unknown":
-            last_date = last_refill[:10]  # Extract date only
-            today = datetime.now().strftime("%Y-%m-%d")  # Today's date
-            
-            if last_date != today:
-                requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage?chat_id={CHAT_ID}&text=Refill the tank")
+        if last_refill_date != "Unknown":
+            try:
+                last_refill_date_only = datetime.strptime(last_refill_date, "%Y-%m-%dT%H:%M:%SZ").date()
+                today_date = datetime.now().date()
+
+                if last_refill_date_only != today_date:
+                    requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage?chat_id={CHAT_ID}&text=Refill the tank")
+            except ValueError:
+                pass
     else:
         upload_to_thingspeak(0)
+    
     return level
 
 def fetch_thingspeak_data():
