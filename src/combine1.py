@@ -159,7 +159,7 @@ def sensor_loop():
         if state["ldr"]:
             ldr_value = readadc(0)
             print(f"LDR Value: {ldr_value}") 
-            GPIO.output(24, ldr_value < 500)
+            GPIO.output(24, ldr_value < 600)
 
 
         lcd.lcd_clear()
@@ -194,13 +194,15 @@ def moisture_detection():
 def tank_monitor():
     while True:
         level = distance()
+        
         if level > 50:  
             if get_last_refill_timestamp().split(" ")[0] != datetime.now().strftime("%Y-%m-%d"):
                 send_telegram_alert("Water tank needs refill!")
             requests.get(f"https://api.thingspeak.com/update?api_key={THINGSPEAK_API_KEY}&field3=1")
         else:
             requests.get(f"https://api.thingspeak.com/update?api_key={THINGSPEAK_API_KEY}&field3=0")
-        sleep(60)  
+        sleep(1) 
+        print(f"ultra:{level}") 
 
 
 @app.route("/")
