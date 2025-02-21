@@ -1,5 +1,5 @@
 {
     "system": true,
-    "temp_humi": true,
+    "temperature_humidity": true,
     "ldr": true
 }
