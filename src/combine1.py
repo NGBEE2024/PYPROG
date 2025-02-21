@@ -151,6 +151,8 @@ def sensor_loop():
                     send_telegram_alert(f"Humidity alert: {humi}%")
                     last_humidity_alert_time = datetime.now()
 
+                print(f"{temp}and{humi}")
+
         ldr_value = None
         if state["ldr"]:
             ldr_value = readadc(0)
