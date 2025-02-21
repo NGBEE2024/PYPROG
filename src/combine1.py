@@ -127,8 +127,10 @@ def get_days_since_refill():
 # -----------------------------background threads--------------------------------------------------
 def sensor_loop():
     global last_temp_alert_time, last_humidity_alert_time
+    print("Sensor loop started")  # Debugging line
     while True:
         state = read_system_state()
+        print("Current state:", state)
         if not state["system"]:
             lcd.lcd_clear()
             lcd.lcd_display_string("System OFF", 1)
@@ -151,11 +153,12 @@ def sensor_loop():
                     send_telegram_alert(f"Humidity alert: {humi}%")
                     last_humidity_alert_time = datetime.now()
 
-                print(f"{temp}and{humi}")
+                print(f"Temperature: {temp}°C, Humidity: {humi}%")
 
         ldr_value = None
         if state["ldr"]:
             ldr_value = readadc(0)
+            print(f"LDR Value: {ldr_value}") 
             GPIO.output(24, ldr_value < 500)
 
 
