@@ -13,7 +13,7 @@ GPIO.setwarnings(False)
 GPIO.setup(25, GPIO.OUT)  # Trig
 GPIO.setup(27, GPIO.IN)  # Echo
 
-# ThingSpeak & Telegram Config
+
 THING_SPEAK_CHANNEL_ID = "2746200"
 TELEGRAM_TOKEN = "7094057858:AAGU0CMWAcTnuMBJoUmBlg8HxUc8c1Mx3jw"
 CHAT_ID = "-1002405515611"
@@ -69,7 +69,7 @@ def check_and_notify():
     return level
 
 def fetch_thingspeak_data():
-    url = f"https://api.thingspeak.com/channels/{THING_SPEAK_CHANNEL_ID}/feeds.json?results=5&api_key=IJ7JE71BJ5DVEMG7"
+    url = f"https://api.thingspeak.com/channels/{THING_SPEAK_CHANNEL_ID}/feeds.json?results=5&api_key=IJ7JE71BJ5DVEMG7" #read api key
     response = requests.get(url)
     if response.status_code == 200:
         return json.loads(response.text)["feeds"]

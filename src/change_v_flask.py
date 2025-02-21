@@ -14,20 +14,20 @@ PWM = GPIO.PWM(26, 50)
 PWM.start(3)  # Start servo at initial position
 sdelay = 4  # Default delay value
 
-# Function for moisture detection and servo control
+
 def moisture_detection():
     global sdelay  # Ensure we are using the global sdelay
     while True:
         if GPIO.input(4):
             print('Detected HIGH (moisture present)')
-            # Turn to 8% position and hold for full sdelay
+
             PWM.ChangeDutyCycle(8)
             print('duty cycle:', 8)
             sleep(2)
             PWM.ChangeDutyCycle(0)
             sleep(sdelay-2)
             
-            # Turn back to 3% position and hold for full sdelay
+
             PWM.ChangeDutyCycle(3)
             print('duty cycle:', 3)
             sleep(2)
