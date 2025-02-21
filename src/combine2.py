@@ -89,10 +89,10 @@ def can_send_alert(last_alert_time):
         return True
     return datetime.now() - last_alert_time > timedelta(hours=24)
 
-def upload_to_thingspeak(temp, humi):
+def upload_to_thingspeak(temp, humi, tank_v):
     global last_thingspeak_upload_time
     if last_thingspeak_upload_time is None or (datetime.now() - last_thingspeak_upload_time).seconds >= 15:
-        url = f"https://api.thingspeak.com/update?api_key={THINGSPEAK_API_KEY}&field1={temp}&field2={humi}"
+        url = f"https://api.thingspeak.com/update?api_key={THINGSPEAK_API_KEY}&field1={temp}&field2={humi}&field3={tank_v}"
         requests.get(url)
         last_thingspeak_upload_time = datetime.now()
 
@@ -138,12 +138,15 @@ def sensor_loop():
             sleep(2)
             continue
 
-        
         temp, humi = None, None
         if state["temperature_humidity"]:
             humi, temp = Adafruit_DHT.read(DHT_SENSOR, DHT_PIN)
             if humi is not None and temp is not None:
-                upload_to_thingspeak(temp, humi)
+                # Get tank moisture status (1 or 0)
+                tank_v =
+                
+                # Upload all data to ThingSpeak
+                upload_to_thingspeak(temp, humi, tank_v)
                 
                 if (temp < 18 or temp > 28) and can_send_alert(last_temp_alert_time):
                     send_telegram_alert(f"Temperature alert: {temp}°C")
@@ -153,25 +156,13 @@ def sensor_loop():
                     send_telegram_alert(f"Humidity alert: {humi}%")
                     last_humidity_alert_time = datetime.now()
 
-                print(f"Temperature: {temp}°C, Humidity: {humi}%")
-                
-            level = distance()
-            
-            if level > 50:  
-                if get_last_refill_timestamp().split(" ")[0] != datetime.now().strftime("%Y-%m-%d"):
-                    send_telegram_alert("Water tank needs refill!")
-                requests.get(f"https://api.thingspeak.com/update?api_key={THINGSPEAK_API_KEY}&field3=1")
-            else:
-                requests.get(f"https://api.thingspeak.com/update?api_key={THINGSPEAK_API_KEY}&field3=0")
-            sleep(1) 
-            print(f"ultra:{level}") 
+                print(f"Temperature: {temp}°C, Humidity: {humi}%, Tank Moisture: {tank_v}")
 
         ldr_value = None
         if state["ldr"]:
             ldr_value = readadc(0)
             print(f"LDR Value: {ldr_value}") 
             GPIO.output(24, ldr_value < 600)
-
 
         lcd.lcd_clear()
         if temp is not None and humi is not None:
@@ -185,8 +176,6 @@ def sensor_loop():
             lcd.lcd_display_string("LDR:OFF", 2)
 
         sleep(2)
-
-    
 
 def moisture_detection():
     global sdelay
@@ -204,8 +193,19 @@ def moisture_detection():
         else:
             sleep(0.5)
 
-
-
+def tank_monitor():
+    while True:
+        level = distance()
+        
+        if level > 50:  
+            if get_last_refill_timestamp().split(" ")[0] != datetime.now().strftime("%Y-%m-%d"):
+                send_telegram_alert("Water tank needs refill!")
+            tank_v=1
+        else:
+            tank_v=0
+        return tank_v
+        sleep(1) 
+        print(f"ultra:{level}") 
 
 
 @app.route("/")
@@ -255,7 +255,7 @@ if __name__ == "__main__":
 
     threading.Thread(target=sensor_loop, daemon=True).start()
     threading.Thread(target=moisture_detection, daemon=True).start()
-    #threading.Thread(target=tank_monitor, daemon=True).start()
+    threading.Thread(target=tank_monitor, daemon=True).start()
     
     # Start Flask app
     app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
